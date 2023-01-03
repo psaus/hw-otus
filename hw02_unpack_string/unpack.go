@@ -16,7 +16,6 @@ func isCanBeEscaped(r rune) bool {
 }
 
 func Unpack(input string) (string, error) {
-
 	runes := []rune(input)
 	inputLen := len(runes)
 
@@ -29,7 +28,7 @@ func Unpack(input string) (string, error) {
 	}
 
 	var b strings.Builder
-	var index int = 0
+	var index int
 
 	for index < inputLen {
 		if runes[index] == EscapeRune {
