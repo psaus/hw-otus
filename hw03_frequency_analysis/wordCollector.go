@@ -1,10 +1,10 @@
 package hw03frequencyanalysis
 
-type wordCollector struct {
+type WordCollector struct {
 	list map[string]*wordFrenquency
 }
 
-func (w *wordCollector) GetWordFrenquencySorter() *wordFrenquencySorter {
+func (w *WordCollector) GetWordFrenquencySorter() *wordFrenquencySorter {
 	wordListSize := len(w.list)
 
 	if wordListSize == 0 {
@@ -23,13 +23,13 @@ func (w *wordCollector) GetWordFrenquencySorter() *wordFrenquencySorter {
 	}
 }
 
-func NewWordCollector() *wordCollector {
-	return &wordCollector{
+func NewWordCollector() *WordCollector {
+	return &WordCollector{
 		list: make(map[string]*wordFrenquency),
 	}
 }
 
-func (w *wordCollector) wordUp(value string) {
+func (w *WordCollector) WordUp(value string) {
 	wf, ok := w.list[value]
 
 	if !ok {

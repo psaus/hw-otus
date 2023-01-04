@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var cleanUpWordRegexp *regexp.Regexp = regexp.MustCompile(`[^a-zA-Z\\u0430-яА-Я-]+`)
+var cleanUpWordRegexp = regexp.MustCompile(`[^a-zA-Z\\u0430-яА-Я-]+`)
 
 func Top10(text string) []string {
 	collector := NewWordCollector()
@@ -17,7 +17,7 @@ func Top10(text string) []string {
 		}
 
 		value := cleanUpWordRegexp.ReplaceAllString(value, "")
-		collector.wordUp(strings.ToLower(value))
+		collector.WordUp(strings.ToLower(value))
 	}
 
 	return collector.GetWordFrenquencySorter().GetSortedWords(10)
