@@ -48,4 +48,25 @@ func TestList(t *testing.T) {
 		}
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 	})
+
+	t.Run("list integrity", func(t *testing.T) {
+		l := NewList()
+
+		for _, v := range [...]int{10, 20, 30, 40, 50, 60, 70, 80} {
+			l.PushBack(v)
+		} // [10, 20, 30, 40, 50, 60, 70, 80]
+
+		// check valid front after remove
+		l.Remove(l.Front())
+		require.Equal(t, 20, l.Front().Value)
+
+		// check valid back after remove
+		l.Remove(l.Back())
+		require.Equal(t, 70, l.Back().Value)
+
+		// check elemnt  next item link is valid after remove
+		k := l.Front().Next // 30
+		l.Remove(k.Next)    // remove 40
+		require.Equal(t, 50, k.Next.Value)
+	})
 }
