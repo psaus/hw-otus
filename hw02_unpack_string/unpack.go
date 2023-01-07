@@ -16,46 +16,46 @@ func isCanBeEscaped(r rune) bool {
 }
 
 func Unpack(input string) (string, error) {
-	runes := []rune(input)
-	inputLen := len(runes)
+	inputRunes := []rune(input)
+	inputLen := len(inputRunes)
 
 	if inputLen == 0 {
 		return "", nil
 	}
 
-	if unicode.IsDigit(runes[0]) {
+	if unicode.IsDigit(inputRunes[0]) || inputRunes[inputLen-1] == EscapeRune {
 		return "", ErrInvalidString
 	}
 
-	var b strings.Builder
+	var unpackedStringBuilder strings.Builder
 	var index int
 
 	for index < inputLen {
-		if runes[index] == EscapeRune {
+		if inputRunes[index] == EscapeRune {
 			index++
 		}
 
-		currentRune := runes[index]
+		currentRune := inputRunes[index]
 
-		if isCanBeEscaped(currentRune) && runes[index-1] != EscapeRune {
+		if isCanBeEscaped(currentRune) && inputRunes[index-1] != EscapeRune {
 			return "", ErrInvalidString
 		}
 
 		nextRuneIndex := index + 1
-		p := 1
+		repeatRuneCount := 1
 
-		if nextRuneIndex < inputLen && unicode.IsDigit(runes[nextRuneIndex]) {
-			p, _ = strconv.Atoi(string(runes[nextRuneIndex]))
+		if nextRuneIndex < inputLen && unicode.IsDigit(inputRunes[nextRuneIndex]) {
+			repeatRuneCount, _ = strconv.Atoi(string(inputRunes[nextRuneIndex]))
 			index++
 		}
 
-		for p > 0 {
-			b.WriteRune(currentRune)
-			p--
+		for repeatRuneCount > 0 {
+			unpackedStringBuilder.WriteRune(currentRune)
+			repeatRuneCount--
 		}
 
 		index++
 	}
 
-	return b.String(), nil
+	return unpackedStringBuilder.String(), nil
 }
