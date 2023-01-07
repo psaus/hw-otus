@@ -25,8 +25,18 @@ func (f ByFrenquency) Less(i, j int) bool {
 
 var cleanUpWordRegexp = regexp.MustCompile(`[^a-zA-Z\\u0430-яА-Я-]+`)
 
+func convertWordListToSlice(wordList *map[string]int) []*wordFrenquency {
+	i := 0
+	wordFrenquencyList := make([]*wordFrenquency, len(*wordList))
+	for w, c := range *wordList {
+		wordFrenquencyList[i] = &wordFrenquency{c, w}
+		i++
+	}
+	return wordFrenquencyList
+}
+
 func Top10(text string) []string {
-	collector := make(map[string]int)
+	wordList := make(map[string]int)
 
 	for _, value := range strings.Fields(text) {
 		value = strings.Trim(value, "-")
@@ -35,24 +45,18 @@ func Top10(text string) []string {
 		}
 
 		value := strings.ToLower(cleanUpWordRegexp.ReplaceAllString(value, ""))
-		if _, ok := collector[value]; !ok {
-			collector[value] = 1
+		if _, ok := wordList[value]; !ok {
+			wordList[value] = 1
 		} else {
-			collector[value]++
+			wordList[value]++
 		}
 	}
 
-	i := 0
-	listSize := len(collector)
-	wordFrenquencyList := make([]*wordFrenquency, listSize)
-	for w, c := range collector {
-		wordFrenquencyList[i] = &wordFrenquency{c, w}
-		i++
-	}
-
+	wordFrenquencyList := convertWordListToSlice(&wordList)
 	sort.Sort(ByFrenquency(wordFrenquencyList))
+
 	returnSize := 10
-	if listSize < 10 {
+	if listSize := len(wordFrenquencyList); listSize < 10 {
 		returnSize = listSize
 	}
 
@@ -60,5 +64,6 @@ func Top10(text string) []string {
 	for i, wf := range wordFrenquencyList[0:returnSize] {
 		out[i] = wf.word
 	}
+
 	return out
 }

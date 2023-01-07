@@ -100,7 +100,7 @@ func TestSmallText(t *testing.T) {
 	})
 }
 
-func TestSprtByFrenquency(t *testing.T) {
+func TestSortByFrenquency(t *testing.T) {
 	dataSet := []string{"наверное", "нет", "Да", "да"}
 	ws := []*wordFrenquency{
 		{counter: 1, word: "да"},
