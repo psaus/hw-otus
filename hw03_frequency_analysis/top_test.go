@@ -1,6 +1,7 @@
 package hw03frequencyanalysis
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -77,6 +78,41 @@ func TestTop10(t *testing.T) {
 				"то",        // 4
 			}
 			require.Equal(t, expected, Top10(text))
+		}
+	})
+}
+
+var smallText = `
+	Раз, два, три
+	Раз, два
+	Раз!
+`
+
+func TestSmallText(t *testing.T) {
+	expected := []string{
+		"раз",
+		"два",
+		"три",
+	}
+
+	t.Run("less 10 unique words", func(t *testing.T) {
+		require.Equal(t, expected, Top10(smallText))
+	})
+}
+
+func TestSprtByFrenquency(t *testing.T) {
+	dataSet := []string{"наверное", "нет", "Да", "да"}
+	ws := []*wordFrenquency{
+		{counter: 1, word: "да"},
+		{counter: 1, word: "Да"},
+		{counter: 3, word: "нет"},
+		{counter: 6, word: "наверное"},
+	}
+
+	t.Run("check sort", func(t *testing.T) {
+		sort.Sort(ByFrenquency(ws))
+		for i, v := range ws {
+			require.Equal(t, dataSet[i], v.word)
 		}
 	})
 }
