@@ -29,15 +29,22 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 	listItem, ok := c.items[key]
 	ci := &cacheItem{key, value}
 
-	if !ok {
-		c.items[key] = c.queue.PushFront(ci)
-		c.Clear()
-	} else {
+	if ok {
 		listItem.Value = ci
 		c.queue.MoveToFront(listItem)
+		return true
 	}
 
-	return ok
+	c.items[key] = c.queue.PushFront(ci)
+
+	if c.queue.Len() > c.capacity {
+		itemForRemove := c.queue.Back()
+		c.queue.Remove(itemForRemove)
+		cacheForRemove := itemForRemove.Value.(*cacheItem)
+		delete(c.items, cacheForRemove.key)
+	}
+
+	return false
 }
 
 func (c *lruCache) Get(key Key) (interface{}, bool) {
@@ -60,12 +67,10 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 }
 
 func (c *lruCache) Clear() {
-	if c.queue.Len() > c.capacity {
-		itemForRemove := c.queue.Back()
-		c.queue.Remove(itemForRemove)
-		cacheForRemove := itemForRemove.Value.(*cacheItem)
-		delete(c.items, cacheForRemove.key)
-	}
+	c.Lock()
+	defer c.Unlock()
+	c.queue = NewList()
+	c.items = make(map[Key]*ListItem, c.capacity)
 }
 
 func NewCache(capacity int) Cache {
