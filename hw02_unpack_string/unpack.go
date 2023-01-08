@@ -23,7 +23,7 @@ func Unpack(input string) (string, error) {
 		return "", nil
 	}
 
-	if unicode.IsDigit(inputRunes[0]) || inputRunes[inputLen-1] == EscapeRune {
+	if unicode.IsDigit(inputRunes[0]) {
 		return "", ErrInvalidString
 	}
 
@@ -33,6 +33,10 @@ func Unpack(input string) (string, error) {
 	for index < inputLen {
 		if inputRunes[index] == EscapeRune {
 			index++
+
+			if index >= inputLen || !isCanBeEscaped(inputRunes[index]) {
+				return "", ErrInvalidString
+			}
 		}
 
 		currentRune := inputRunes[index]
@@ -49,9 +53,8 @@ func Unpack(input string) (string, error) {
 			index++
 		}
 
-		for repeatRuneCount > 0 {
-			unpackedStringBuilder.WriteRune(currentRune)
-			repeatRuneCount--
+		if repeatRuneCount > 0 {
+			unpackedStringBuilder.WriteString(strings.Repeat(string(currentRune), repeatRuneCount))
 		}
 
 		index++
