@@ -45,3 +45,19 @@ func TestUnpackInvalidString(t *testing.T) {
 		})
 	}
 }
+
+func TestIsCanBeEscaped(t *testing.T) {
+	validEscape := []rune{'\\', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
+	t.Run("valid runes for escaping", func(t *testing.T) {
+		for _, symbol := range validEscape {
+			require.True(t, isCanBeEscaped(symbol))
+		}
+	})
+
+	notValidEscape := []rune{'a', 'd', '\n', '#', '?', '+', 'c', 'E', ' ', '_', '-'}
+	t.Run("not valid runes for escaping", func(t *testing.T) {
+		for _, symbol := range notValidEscape {
+			require.False(t, isCanBeEscaped(symbol))
+		}
+	})
+}
