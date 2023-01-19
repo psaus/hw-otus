@@ -3,6 +3,7 @@ package hw05parallelexecution
 import (
 	"errors"
 	"sync"
+	"sync/atomic"
 )
 
 var (
@@ -11,33 +12,6 @@ var (
 )
 
 type Task func() error
-
-func worker(wg *sync.WaitGroup, taskChan <-chan Task, errorCounter *SafeCounter) {
-	defer wg.Done()
-
-	for t := range taskChan {
-		if err := t(); err != nil {
-			errorCounter.Increment()
-		}
-	}
-}
-
-type SafeCounter struct {
-	sync.Mutex
-	count int
-}
-
-func (s *SafeCounter) Increment() {
-	s.Mutex.Lock()
-	s.count++
-	s.Mutex.Unlock()
-}
-
-func (s *SafeCounter) Value() int {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
-	return s.count
-}
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
@@ -49,47 +23,37 @@ func Run(tasks []Task, n, m int) error {
 		return ErrInvalidWorkerNumber
 	}
 
-	wg := &sync.WaitGroup{}
 	taskChan := make(chan Task)
-	errorCounter := &SafeCounter{}
+
+	wg := &sync.WaitGroup{}
+	wg.Add(n)
+	var errorCounter int32
 
 	// spawning workers
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		if len(tasks) < n {
-			n = len(tasks)
-		}
-
-		for i := 0; i < n; i++ {
-			wg.Add(1)
-			go worker(wg, taskChan, errorCounter)
-		}
-	}()
-
-	var wasErrors bool
-	// channel producer
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		defer close(taskChan)
-
-		for _, task := range tasks {
-			wasErrors = m > 0 && errorCounter.Value() >= m
-			if wasErrors {
-				break
+	for i := 0; i < n; i++ {
+		go func() {
+			defer wg.Done()
+			// read the channel until it closes
+			for t := range taskChan {
+				if err := t(); err != nil {
+					atomic.AddInt32(&errorCounter, 1)
+				}
 			}
-
-			taskChan <- task
-		}
-	}()
-
-	wg.Wait()
-
-	if wasErrors {
-		return ErrErrorsLimitExceeded
+		}()
 	}
 
+	// channel producer
+	for _, task := range tasks {
+		if m > 0 && int(atomic.LoadInt32(&errorCounter)) >= m {
+			close(taskChan)
+			wg.Wait()
+			return ErrErrorsLimitExceeded
+		}
+
+		taskChan <- task
+	}
+
+	close(taskChan)
+	wg.Wait()
 	return nil
 }
