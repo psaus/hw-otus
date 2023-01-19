@@ -17,10 +17,12 @@ func TestUnpack(t *testing.T) {
 		{input: "", expected: ""},
 		{input: "aaa0b", expected: "aab"},
 		// uncomment if task with asterisk completed
-		// {input: `qwe\4\5`, expected: `qwe45`},
-		// {input: `qwe\45`, expected: `qwe44444`},
-		// {input: `qwe\\5`, expected: `qwe\\\\\`},
-		// {input: `qwe\\\3`, expected: `qwe\3`},
+		{input: `qwe\4\5`, expected: `qwe45`},
+		{input: `qwe\45`, expected: `qwe44444`},
+		{input: `qwe\\5`, expected: `qwe\\\\\`},
+		{input: `qwe\\\3`, expected: `qwe\3`},
+		{input: `qwe\\\3\\`, expected: `qwe\3\`},
+		{input: "d\n5abc", expected: "d\n\n\n\n\nabc"},
 	}
 
 	for _, tc := range tests {
@@ -34,7 +36,7 @@ func TestUnpack(t *testing.T) {
 }
 
 func TestUnpackInvalidString(t *testing.T) {
-	invalidStrings := []string{"3abc", "45", "aaa10b"}
+	invalidStrings := []string{"3abc", "45", "aaa10b", `ab\n`, `qwe\\\3\`}
 	for _, tc := range invalidStrings {
 		tc := tc
 		t.Run(tc, func(t *testing.T) {
@@ -42,4 +44,20 @@ func TestUnpackInvalidString(t *testing.T) {
 			require.Truef(t, errors.Is(err, ErrInvalidString), "actual error %q", err)
 		})
 	}
+}
+
+func TestIsCanBeEscaped(t *testing.T) {
+	validEscape := []rune{'\\', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
+	t.Run("valid runes for escaping", func(t *testing.T) {
+		for _, symbol := range validEscape {
+			require.True(t, isCanBeEscaped(symbol))
+		}
+	})
+
+	notValidEscape := []rune{'a', 'd', '\n', '#', '?', '+', 'c', 'E', ' ', '_', '-'}
+	t.Run("not valid runes for escaping", func(t *testing.T) {
+		for _, symbol := range notValidEscape {
+			require.False(t, isCanBeEscaped(symbol))
+		}
+	})
 }
