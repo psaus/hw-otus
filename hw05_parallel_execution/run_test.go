@@ -67,4 +67,47 @@ func TestRun(t *testing.T) {
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
 	})
+
+	t.Run("tasks with zero error limit", func(t *testing.T) {
+		tasksCount := 50
+		tasks := make([]Task, 0, tasksCount)
+
+		var runTasksCount int32
+
+		for i := 0; i < tasksCount; i++ {
+			err := fmt.Errorf("error from task %d", i)
+			tasks = append(tasks, func() error {
+				atomic.AddInt32(&runTasksCount, 1)
+				return err
+			})
+		}
+
+		workersCount := 5
+		maxErrorsCount := 0
+
+		err := Run(tasks, workersCount, maxErrorsCount)
+		require.NoError(t, err)
+		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
+	})
+
+	t.Run("run tasks with bad params", func(t *testing.T) {
+		// the empty slice do nothing
+		tasks := []Task{}
+		err := Run(tasks, 5, 5)
+		require.Equal(t, nil, err)
+
+		// error with zero number of workers
+		tasks = append(tasks,
+			func() error { return nil },
+			func() error { return nil },
+			func() error { return nil },
+		)
+
+		err = Run(tasks, 0, 1)
+		require.Equal(t, ErrInvalidWorkerNumber, err)
+
+		// run then task count less than workers count
+		err = Run(tasks, 100, 0)
+		require.Equal(t, nil, err)
+	})
 }
